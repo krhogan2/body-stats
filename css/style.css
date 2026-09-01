@@ -57,7 +57,7 @@ body {
 
 .top { padding: 1.75rem 0 0.5rem; }
 
-main { padding-top: 1.25rem; }
+main { padding-top: 1.25rem; padding-bottom: 2.4rem; }
 
 .eyebrow {
   margin: 0 0 0.4rem;
@@ -179,7 +179,7 @@ code {
 .log-card { padding: 1.15rem 1.1rem 1.2rem; }
 
 .chart-head h2 {
-  margin: 0;
+  margin: 0 0 0.8rem;
   font-family: Fredoka, Nunito, sans-serif;
   font-size: clamp(1.25rem, 4.5vw, 1.6rem);
 }

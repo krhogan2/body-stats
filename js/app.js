@@ -192,7 +192,7 @@
   function fillChange(idValue, idSub, change) {
     if (!change) {
       setText(idValue, "—");
-      setText(idSub, "need an older point");
+      setText(idSub, "");
       setTrend(idValue, null);
       return;
     }
@@ -245,12 +245,6 @@
     setText("range-lo", formatLb(lo) + " · −10%");
     setText("range-mid", formatLb(start) + " start");
     setText("range-hi", formatLb(hi) + " · +10%");
-    var delta = ((latest - start) / start) * 100;
-    setText(
-      "band-copy",
-      "Start " + formatLb(start) + " lb. Latest is " + formatSignedPct(delta) +
-        " from that first weigh-in. The band is ±10%."
-    );
   }
 
   function chartDefaults() {
@@ -570,33 +564,18 @@
     var prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
     setText("latest-weight", formatLb(latest.lb));
     setText("latest-bf", latest.bf === null ? "—" : formatPct(latest.bf));
-    var zone = latest.bmi === null ? null : bmiZone(latest.bmi);
     setText("latest-bmi", latest.bmi === null ? "—" : latest.bmi.toFixed(1));
-    if (zone) {
-      var bmiSub = document.querySelector(".hero.bmi .hero-sub");
-      if (bmiSub) bmiSub.textContent = zone.label + " · (lb / 66²) × 703 · height 5′6″";
-    }
 
     if (prev) {
       var d = latest.lb - prev.lb;
       setText("weight-delta", formatSignedLb(d) + " vs last weigh-in");
       setTrend("weight-delta", d);
     } else {
-      setText("weight-delta", "first point on the board");
-    }
-
-    if (latest.bf === null) {
-      var fatCard = document.querySelector(".hero.fat .hero-sub");
-      if (fatCard) fatCard.textContent = "dash when weight is under 115 lb";
+      setText("weight-delta", "");
     }
   }
 
   function boot() {
-    var sample = document.getElementById("sample-banner");
-    if (sample && typeof USING_SAMPLE_DATA !== "undefined" && USING_SAMPLE_DATA) {
-      sample.classList.remove("hidden");
-    }
-
     var sorted = parseWeighIns(typeof WEIGH_INS !== "undefined" ? WEIGH_INS : []);
     renderHero(sorted);
     fillChange("change-7", "change-7-lb", changeOverDays(sorted, 7));
@@ -606,7 +585,6 @@
     var week = weeklyAverage(sorted);
     if (week) {
       setText("weekly-avg", formatLb(week.avg));
-      setText("weekly-avg-sub", week.count + " weigh-ins in 7 days");
     }
 
     drawSparkline(sorted);
