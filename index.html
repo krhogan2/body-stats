@@ -28,9 +28,6 @@
   -->
 
   <main>
-    <p class="sample-banner hidden" id="sample-banner" role="status">
-      Showing placeholder points. Replace them in <code>js/data.js</code>.
-    </p>
     <section class="hero-grid" aria-label="Latest numbers">
       <article class="bubble hero weight">
         <p class="hero-label">Latest weight</p>
@@ -44,14 +41,12 @@
         <p class="hero-label">Latest body fat</p>
         <p class="hero-value" id="latest-bf">—</p>
         <p class="hero-unit">percent</p>
-        <p class="hero-sub">(weight − 115) / weight</p>
       </article>
 
       <article class="bubble hero bmi">
         <p class="hero-label">Latest BMI</p>
         <p class="hero-value" id="latest-bmi">—</p>
         <p class="hero-unit">index</p>
-        <p class="hero-sub">(lb / 66²) × 703 · height 5′6″</p>
       </article>
     </section>
 
@@ -74,7 +69,7 @@
       <article class="bubble pill">
         <p class="pill-label">Weekly average</p>
         <p class="pill-value" id="weekly-avg">—</p>
-        <p class="pill-sub" id="weekly-avg-sub">need 2+ points in 7 days</p>
+        <p class="pill-sub" id="weekly-avg-sub"></p>
       </article>
     </section>
 
@@ -82,7 +77,6 @@
       <article class="bubble chart-card chart-card--wide">
         <div class="chart-head">
           <h2>Weight over time</h2>
-          <p>Every weigh-in on its real date, ±10% band from the first point in the log.</p>
         </div>
         <div class="chart-frame">
           <canvas id="chart-weight" aria-label="Weight over time"></canvas>
@@ -92,7 +86,6 @@
       <article class="bubble chart-card">
         <div class="chart-head">
           <h2>Body fat % over time</h2>
-          <p>Exactly (weight − 115) / weight, shown as a percent.</p>
         </div>
         <div class="chart-frame">
           <canvas id="chart-bf" aria-label="Body fat percent over time"></canvas>
@@ -102,7 +95,6 @@
       <article class="bubble chart-card">
         <div class="chart-head">
           <h2>BMI over time</h2>
-          <p>WHO adult zones on (lb / 66²) × 703. Height stays 5′6″. Clear line at 25 (overweight starts above).</p>
         </div>
         <ul class="bmi-key" aria-label="WHO BMI categories">
           <li><span class="swatch under"></span> underweight &lt; 18.5</li>
@@ -118,7 +110,6 @@
       <article class="bubble chart-card chart-card--wide">
         <div class="chart-head">
           <h2>10% progress band</h2>
-          <p id="band-copy">How far you are from ±10% of your starting weight.</p>
         </div>
         <div class="range" id="range-track" aria-hidden="true">
           <div class="range-fill"></div>
@@ -138,7 +129,6 @@
     <section class="bubble log-card">
       <div class="chart-head">
         <h2>Weigh-in log</h2>
-        <p>Newest first. Add a row in <code>js/data.js</code> — date + pounds only.</p>
       </div>
       <div class="table-wrap">
         <table>
@@ -156,11 +146,6 @@
       </div>
     </section>
   </main>
-
-  <footer class="foot">
-    <p><strong>Add a weigh-in:</strong> open <code>js/data.js</code>, drop a line in the marked block, commit.</p>
-    <p class="quiet">Static only · height locked at 5′6″ · no accounts · no backend</p>
-  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script>
