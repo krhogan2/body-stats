@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kevin Hogan · body stats</title>
+  <meta name="description" content="Kevin Hogan's personal weight dashboard. Date + pounds in, weight / body fat / BMI out." />
+  <meta name="theme-color" content="#FF8A6A" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <div class="blobs" aria-hidden="true">
+    <span class="blob blob-a"></span>
+    <span class="blob blob-b"></span>
+    <span class="blob blob-c"></span>
+  </div>
+
+  <header class="top">
+    <p class="eyebrow">Kevin Hogan · body stats</p>
+    <h1>Hey Kevin — you’re showing up. That’s the win.</h1>
+    <p class="lede" id="lede">Soft cards, honest numbers, one weigh-in at a time.</p>
+    <p class="sample-banner hidden" id="sample-banner" role="status">
+      These are <strong>sample / replace-me</strong> points so the charts aren’t empty.
+      Swap them in <code>js/data.js</code>.
+    </p>
+  </header>
+
+  <!--
+    ADD WEIGH-INS IN js/data.js — look for "ADD A NEW WEIGH-IN HERE".
+    Only fields: { date: "YYYY-MM-DD", lb: 185 }
+    Height is fixed at 5'6" (66 in). BMI and body fat % are calculated for you.
+  -->
+
+  <main>
+    <section class="hero-grid" aria-label="Latest numbers">
+      <article class="bubble hero weight">
+        <p class="hero-label">Latest weight</p>
+        <p class="hero-value" id="latest-weight">—</p>
+        <p class="hero-unit">pounds</p>
+        <p class="hero-sub" id="weight-delta">vs last weigh-in</p>
+        <svg class="spark" id="sparkline" viewBox="0 0 160 40" width="160" height="40" aria-hidden="true"></svg>
+      </article>
+
+      <article class="bubble hero fat">
+        <p class="hero-label">Latest body fat</p>
+        <p class="hero-value" id="latest-bf">—</p>
+        <p class="hero-unit">percent</p>
+        <p class="hero-sub">(weight − 115) / weight</p>
+      </article>
+
+      <article class="bubble hero bmi">
+        <p class="hero-label">Latest BMI</p>
+        <p class="hero-value" id="latest-bmi">—</p>
+        <p class="hero-unit">index</p>
+        <p class="hero-sub">(lb / 66²) × 703 · height 5′6″</p>
+      </article>
+    </section>
+
+    <section class="change-grid" aria-label="Percent change">
+      <article class="bubble pill">
+        <p class="pill-label">7-day change</p>
+        <p class="pill-value" id="change-7">—</p>
+        <p class="pill-sub" id="change-7-lb"></p>
+      </article>
+      <article class="bubble pill">
+        <p class="pill-label">30-day change</p>
+        <p class="pill-value" id="change-30">—</p>
+        <p class="pill-sub" id="change-30-lb"></p>
+      </article>
+      <article class="bubble pill">
+        <p class="pill-label">All-time change</p>
+        <p class="pill-value" id="change-all">—</p>
+        <p class="pill-sub" id="change-all-lb"></p>
+      </article>
+      <article class="bubble pill">
+        <p class="pill-label">Weekly average</p>
+        <p class="pill-value" id="weekly-avg">—</p>
+        <p class="pill-sub" id="weekly-avg-sub">need 2+ points in 7 days</p>
+      </article>
+    </section>
+
+    <section class="charts" aria-label="Charts">
+      <article class="bubble chart-card chart-card--wide">
+        <div class="chart-head">
+          <h2>Weight over time</h2>
+          <p>Pounds, with a ±10% band from your first weigh-in.</p>
+        </div>
+        <div class="chart-frame">
+          <canvas id="chart-weight" aria-label="Weight over time"></canvas>
+        </div>
+      </article>
+
+      <article class="bubble chart-card">
+        <div class="chart-head">
+          <h2>Body fat % over time</h2>
+          <p>Exactly (weight − 115) / weight, shown as a percent.</p>
+        </div>
+        <div class="chart-frame">
+          <canvas id="chart-bf" aria-label="Body fat percent over time"></canvas>
+        </div>
+      </article>
+
+      <article class="bubble chart-card">
+        <div class="chart-head">
+          <h2>BMI over time</h2>
+          <p>Exactly (weight_lb / 66²) × 703. Height stays 5′6″.</p>
+        </div>
+        <div class="chart-frame">
+          <canvas id="chart-bmi" aria-label="BMI over time"></canvas>
+        </div>
+      </article>
+
+      <article class="bubble chart-card chart-card--wide">
+        <div class="chart-head">
+          <h2>10% progress band</h2>
+          <p id="band-copy">How far you are from ±10% of your starting weight.</p>
+        </div>
+        <div class="range" id="range-track" aria-hidden="true">
+          <div class="range-fill"></div>
+          <div class="range-marks">
+            <span id="range-lo">−10%</span>
+            <span id="range-mid">start</span>
+            <span id="range-hi">+10%</span>
+          </div>
+          <div class="range-now" id="range-now"></div>
+        </div>
+        <div class="chart-frame chart-frame--short">
+          <canvas id="chart-change" aria-label="Percent change from start with plus and minus 10 percent lines"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="bubble log-card">
+      <div class="chart-head">
+        <h2>Weigh-in log</h2>
+        <p>Newest first. Add a row in <code>js/data.js</code> — date + pounds only.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Weight</th>
+              <th scope="col">Body fat</th>
+              <th scope="col">BMI</th>
+              <th scope="col">Δ lb</th>
+            </tr>
+          </thead>
+          <tbody id="log-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p><strong>Add a weigh-in:</strong> open <code>js/data.js</code>, drop a line in the marked block, commit.</p>
+    <p class="quiet">Static only · height locked at 5′6″ · no accounts · no backend</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="./js/data.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
