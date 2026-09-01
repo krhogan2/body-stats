@@ -20,13 +20,15 @@
 const USING_SAMPLE_DATA = false;
 
 // -----------------------------------------------------------------------------
-// SHOW_HISTORY: set true to include weigh-ins before 2026-08-11. false = hide them.
-// Historic = every row dated BEFORE 2026-08-11 (quarterly 143s + the 28/50 drop).
-// false → charts/hero use Aug 11 onward only (115 hold through Aug 27, then 117 on Aug 31).
-// Flip this one line. Or comment one and uncomment the other.
-const SHOW_HISTORY = true;
-// const SHOW_HISTORY = false;
-const HISTORY_BEFORE = "2026-08-11"; // rows dated before this are historic
+// HISTORY OFF-FLAG (default = history ON). There is NO on-flag.
+// Historic = every weigh-in dated BEFORE 2026-08-11.
+// Leave the `st (off)` line commented → include history.
+// Uncomment `st (off)` → hide those rows (keep Aug 11 onward: 115 hold + 117 current).
+let hideHistory = false;
+function off() { hideHistory = true; }
+function st(fn) { fn(); } // so the next line is real JS: st (off) calls off()
+// Uncomment the next line to hide weigh-ins before 2026-08-11. Leave it commented = history on. There is NO on-flag.
+// st (off)
 // -----------------------------------------------------------------------------
 
 const WEIGH_INS = [

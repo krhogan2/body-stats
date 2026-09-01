@@ -18,6 +18,20 @@
     return (lb / (HEIGHT_IN * HEIGHT_IN)) * BMI_FACTOR;
   }
 
+  // WHO adult BMI: <18.5 underweight, 18.5–24.9 normal, 25–29.9 overweight, ≥30 obese.
+  function bmiZone(bmi) {
+    if (!isFiniteNumber(bmi)) return null;
+    if (bmi < 18.5) return { key: "underweight", label: "underweight", color: "#6eb6ff" };
+    if (bmi < 25) return { key: "normal", label: "normal", color: "#3ecf9f" };
+    if (bmi < 30) return { key: "overweight", label: "overweight", color: "#e6b325" };
+    return { key: "obese", label: "obese", color: "#ff7a5c" };
+  }
+
+  function bmiLineColor(bmi) {
+    var zone = bmiZone(bmi);
+    return zone ? zone.color : "#3ecf9f";
+  }
+
   function isFiniteNumber(n) {
     return typeof n === "number" && Number.isFinite(n);
   }
@@ -54,10 +68,9 @@
     rows.sort(function (a, b) {
       return a.date.getTime() - b.date.getTime();
     });
-    if (typeof SHOW_HISTORY !== "undefined" && !SHOW_HISTORY) {
-      var cutoff = typeof HISTORY_BEFORE === "string" ? HISTORY_BEFORE : "2026-08-11";
+    if (typeof hideHistory !== "undefined" && hideHistory) {
       rows = rows.filter(function (row) {
-        return row.iso >= cutoff;
+        return row.iso >= "2026-08-11";
       });
     }
     return rows;
@@ -257,9 +270,16 @@
     var canvas = document.getElementById(canvasId);
     if (!canvas || !window.Chart) return null;
     extra = extra || {};
+    var yScale = {
+      grid: { color: "rgba(42, 33, 72, 0.06)" },
+      ticks: extra.yTicks || {},
+    };
+    if (extra.yMin !== undefined) yScale.min = extra.yMin;
+    if (extra.yMax !== undefined) yScale.max = extra.yMax;
     return new Chart(canvas, {
       type: "line",
       data: { datasets: datasets },
+      plugins: extra.plugins || [],
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -287,14 +307,40 @@
               callback: function (value) { return dateTick(value); },
             },
           },
-          y: {
-            grid: { color: "rgba(42, 33, 72, 0.06)" },
-            ticks: extra.yTicks || {},
-          },
+          y: yScale,
         },
       },
     });
   }
+
+  var BMI_BANDS = [
+    { max: 18.5, color: "rgba(110, 182, 255, 0.22)" },
+    { min: 18.5, max: 25, color: "rgba(62, 207, 159, 0.18)" },
+    { min: 25, max: 30, color: "rgba(255, 213, 106, 0.22)" },
+    { min: 30, color: "rgba(255, 122, 92, 0.18)" },
+  ];
+
+  var bmiZonePlugin = {
+    id: "bmiZones",
+    beforeDraw: function (chart) {
+      var yScale = chart.scales.y;
+      var area = chart.chartArea;
+      var ctx = chart.ctx;
+      if (!yScale || !area) return;
+      ctx.save();
+      BMI_BANDS.forEach(function (band) {
+        var topVal = band.max === undefined ? yScale.max : band.max;
+        var botVal = band.min === undefined ? yScale.min : band.min;
+        var top = yScale.getPixelForValue(topVal);
+        var bot = yScale.getPixelForValue(botVal);
+        var y = Math.min(top, bot);
+        var h = Math.abs(bot - top);
+        ctx.fillStyle = band.color;
+        ctx.fillRect(area.left, y, area.right - area.left, h);
+      });
+      ctx.restore();
+    },
+  };
 
   function renderCharts(sorted) {
     if (!window.Chart || !sorted.length) return;
@@ -349,16 +395,59 @@
       yTicks: { callback: function (v) { return v + "%"; } },
     });
 
+    var bmiValues = sorted.map(function (row) { return row.bmi; }).filter(isFiniteNumber);
+    var bmiMin = bmiValues.length ? Math.min.apply(null, bmiValues) : 18.5;
+    var bmiMax = bmiValues.length ? Math.max.apply(null, bmiValues) : 25;
     makeLineChart("chart-bmi", [
+      {
+        label: "18.5 underweight",
+        data: xy(sorted, function () { return 18.5; }),
+        borderColor: "#6eb6ff",
+        borderDash: [5, 5],
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+      },
+      {
+        label: "25 overweight",
+        data: xy(sorted, function () { return 25; }),
+        borderColor: "#e6b325",
+        borderWidth: 3,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+      },
+      {
+        label: "30 obese",
+        data: xy(sorted, function () { return 30; }),
+        borderColor: "#ff7a5c",
+        borderDash: [5, 5],
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+      },
       {
         label: "BMI",
         data: xy(sorted, function (row) { return row.bmi; }),
-        borderColor: "#3ecf9f",
-        backgroundColor: "rgba(62, 207, 159, 0.16)",
-        fill: true,
+        borderColor: bmiLineColor(sorted[sorted.length - 1].bmi),
+        backgroundColor: "transparent",
+        fill: false,
         pointRadius: pointRadius,
+        pointBackgroundColor: function (ctx) {
+          var v = ctx.parsed && ctx.parsed.y;
+          return bmiLineColor(v);
+        },
+        segment: {
+          borderColor: function (ctx) {
+            return bmiLineColor(ctx.p1.parsed.y);
+          },
+        },
       },
-    ], { legend: false });
+    ], {
+      legend: false,
+      plugins: [bmiZonePlugin],
+      yMin: Math.min(16, bmiMin - 1),
+      yMax: Math.max(32, bmiMax + 1),
+    });
 
     makeLineChart("chart-change", [
       {
@@ -421,7 +510,12 @@
     var prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
     setText("latest-weight", formatLb(latest.lb));
     setText("latest-bf", latest.bf === null ? "—" : formatPct(latest.bf));
+    var zone = latest.bmi === null ? null : bmiZone(latest.bmi);
     setText("latest-bmi", latest.bmi === null ? "—" : latest.bmi.toFixed(1));
+    if (zone) {
+      var bmiSub = document.querySelector(".hero.bmi .hero-sub");
+      if (bmiSub) bmiSub.textContent = zone.label + " · (lb / 66²) × 703 · height 5′6″";
+    }
 
     if (prev) {
       var d = latest.lb - prev.lb;

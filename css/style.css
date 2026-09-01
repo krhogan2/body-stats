@@ -188,6 +188,31 @@ code {
   font-size: 0.98rem;
 }
 
+.bmi-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.bmi-key .swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.3rem;
+  border-radius: 999px;
+  vertical-align: -0.05rem;
+}
+
+.bmi-key .under { background: #6eb6ff; }
+.bmi-key .normal { background: #3ecf9f; }
+.bmi-key .over { background: #ffd56a; }
+.bmi-key .obese { background: #ff7a5c; }
+
 .chart-frame {
   position: relative;
   height: min(58vw, 340px);
