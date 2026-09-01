@@ -256,15 +256,27 @@
     Chart.defaults.plugins.legend.labels.usePointStyle = true;
     Chart.defaults.elements.point.radius = 4;
     Chart.defaults.elements.point.hoverRadius = 6;
+    Chart.defaults.elements.point.hitRadius = 16;
     Chart.defaults.elements.line.tension = 0.35;
     Chart.defaults.elements.line.borderWidth = 3;
   }
 
   var chartRegistry = [];
   var tooltipDismissBound = false;
+  var TAP_HIT_PX = 36;
+
+  function applyPinnedTooltip(chart, pin) {
+    if (!chart || !pin) return;
+    chart.setActiveElements(pin.elements);
+    if (chart.tooltip) {
+      chart.tooltip.setActiveElements(pin.elements, pin.position);
+    }
+  }
 
   function hideChartTooltip(chart) {
     if (!chart) return;
+    chart.$pinnedTooltip = null;
+    chart.$forceHide = true;
     var hover = chart.getActiveElements ? chart.getActiveElements() : [];
     var tip = chart.tooltip && chart.tooltip.getActiveElements
       ? chart.tooltip.getActiveElements()
@@ -274,7 +286,6 @@
     if (chart.tooltip) {
       chart.tooltip.setActiveElements([], { x: 0, y: 0 });
     }
-    // mouseout so Chart.js drops the last tap/hover and does not replay it on update
     if (chart.canvas) {
       chart.canvas.dispatchEvent(new Event("mouseout"));
     }
@@ -292,20 +303,126 @@
     return typeof canvas.contains === "function" && canvas.contains(node);
   }
 
+  function isPinableHit(chart, hit) {
+    var ds = chart.data.datasets[hit.datasetIndex];
+    return !!(ds && ds.pointRadius !== 0);
+  }
+
+  function findPinAtEvent(chart, event) {
+    if (!chart || !event || !Chart.helpers || !Chart.helpers.getRelativePosition) return null;
+    var pos = Chart.helpers.getRelativePosition(event, chart);
+    var area = chart.chartArea;
+    if (!area || pos.x < area.left || pos.x > area.right || pos.y < area.top || pos.y > area.bottom) {
+      return null;
+    }
+    var nearest = chart.getElementsAtEventForMode(
+      event,
+      "nearest",
+      { intersect: false },
+      true
+    ).filter(function (hit) { return isPinableHit(chart, hit); });
+    if (!nearest.length) return null;
+    var hit = nearest[0];
+    var meta = chart.getDatasetMeta(hit.datasetIndex);
+    var pt = meta && meta.data[hit.index];
+    if (!pt) return null;
+    var dx = pt.x - pos.x;
+    var dy = pt.y - pos.y;
+    if (dx * dx + dy * dy > TAP_HIT_PX * TAP_HIT_PX) return null;
+    var atIndex = chart.getElementsAtEventForMode(
+      event,
+      "index",
+      { intersect: false },
+      true
+    ).filter(function (item) { return isPinableHit(chart, item); });
+    var source = atIndex.length ? atIndex : nearest;
+    return {
+      elements: source.map(function (item) {
+        return { datasetIndex: item.datasetIndex, index: item.index };
+      }),
+      position: { x: pt.x, y: pt.y },
+    };
+  }
+
+  function pinTooltip(chart, pin) {
+    chart.$forceHide = false;
+    chart.$pinnedTooltip = pin;
+    applyPinnedTooltip(chart, pin);
+    chart.update("none");
+  }
+
+  function isMouseHoverEvent(event) {
+    if (!event) return false;
+    var native = event.native || event;
+    if (native.pointerType && native.pointerType !== "mouse") return false;
+    return event.type === "mousemove" || native.type === "mousemove";
+  }
+
+  var persistPinnedTooltipPlugin = {
+    id: "persistPinnedTooltip",
+    afterEvent: function (chart, args) {
+      var ev = args.event;
+      if (!ev) return;
+      var pin = chart.$pinnedTooltip;
+      var type = ev.type;
+      if (pin) {
+        // Finger-up is mouseout in Chart.js — keep the selecting tap pinned.
+        if (
+          type === "mouseout" ||
+          type === "mouseleave" ||
+          type === "mouseup" ||
+          type === "pointerup" ||
+          type === "touchend" ||
+          type === "mousemove" ||
+          type === "touchmove"
+        ) {
+          applyPinnedTooltip(chart, pin);
+          args.changed = true;
+        }
+        return;
+      }
+      if (chart.$forceHide) {
+        if (isMouseHoverEvent(ev)) {
+          chart.$forceHide = false;
+          return;
+        }
+        chart.setActiveElements([]);
+        if (chart.tooltip) {
+          chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+        }
+        args.changed = true;
+      }
+    },
+  };
+
   function bindTooltipDismiss() {
     if (tooltipDismissBound) return;
     tooltipDismissBound = true;
 
-    function clearIfOutside(event) {
+    function onSelectStart(event) {
+      if (event.pointerType === "mouse" && typeof event.button === "number" && event.button !== 0) {
+        return;
+      }
       chartRegistry.forEach(function (chart) {
-        if (!eventHitsCanvas(event, chart.canvas)) {
+        if (eventHitsCanvas(event, chart.canvas)) {
+          var pin = findPinAtEvent(chart, event);
+          if (pin) {
+            pinTooltip(chart, pin);
+          } else {
+            hideChartTooltip(chart);
+          }
+        } else {
           hideChartTooltip(chart);
         }
       });
     }
 
-    document.addEventListener("pointerdown", clearIfOutside, true);
-    document.addEventListener("touchstart", clearIfOutside, true);
+    if (window.PointerEvent) {
+      document.addEventListener("pointerdown", onSelectStart, true);
+    } else {
+      document.addEventListener("touchstart", onSelectStart, true);
+      document.addEventListener("mousedown", onSelectStart, true);
+    }
     window.addEventListener("scroll", hideAllChartTooltips, { passive: true, capture: true });
   }
 
@@ -313,6 +430,7 @@
     var canvas = document.getElementById(canvasId);
     if (!canvas || !window.Chart) return null;
     extra = extra || {};
+    var plugins = (extra.plugins || []).concat(persistPinnedTooltipPlugin);
     var yScale = {
       grid: { color: "rgba(42, 33, 72, 0.06)" },
       ticks: extra.yTicks || {},
@@ -322,23 +440,12 @@
     var chart = new Chart(canvas, {
       type: "line",
       data: { datasets: datasets },
-      plugins: extra.plugins || [],
+      plugins: plugins,
       options: {
         responsive: true,
         maintainAspectRatio: false,
         parsing: false,
         interaction: { mode: "index", intersect: false },
-        onClick: function (event, _elements, instance) {
-          var hits = instance.getElementsAtEventForMode(
-            event,
-            "nearest",
-            { intersect: true },
-            true
-          );
-          if (!hits.length) {
-            hideChartTooltip(instance);
-          }
-        },
         plugins: {
           legend: { display: extra.legend !== false },
           tooltip: {
