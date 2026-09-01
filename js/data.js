@@ -28,7 +28,7 @@ let hideHistory = false;
 function off() { hideHistory = true; }
 function st(fn) { fn(); } // so the next line is real JS: st (off) calls off()
 // Uncomment the next line to hide weigh-ins before 2026-08-11. Leave it commented = history on. There is NO on-flag.
-// st (off)
+   st (off)
 // -----------------------------------------------------------------------------
 
 const WEIGH_INS = [
@@ -104,4 +104,5 @@ const WEIGH_INS = [
   { date: "2026-08-26", lb: 115 },
   { date: "2026-08-27", lb: 115 },
   { date: "2026-08-31", lb: 117 },
+  { date: "2026-09-01", lb: 190 },
 ];
