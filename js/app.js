@@ -54,6 +54,12 @@
     rows.sort(function (a, b) {
       return a.date.getTime() - b.date.getTime();
     });
+    if (typeof SHOW_HISTORY !== "undefined" && !SHOW_HISTORY) {
+      var cutoff = typeof HISTORY_BEFORE === "string" ? HISTORY_BEFORE : "2026-08-11";
+      rows = rows.filter(function (row) {
+        return row.iso >= cutoff;
+      });
+    }
     return rows;
   }
 

@@ -14,10 +14,20 @@
 //   BMI = (weight_lb / 66^2) * 703
 //
 // Latest / hero numbers always come from the newest DATE in this array.
-// Charts plot every row on its real date (no hardcoded year or 30-day window).
+// Charts plot every remaining row on its real date (no hardcoded year or 30-day window).
 // =============================================================================
 
 const USING_SAMPLE_DATA = false;
+
+// -----------------------------------------------------------------------------
+// SHOW_HISTORY: set true to include weigh-ins before 2026-08-11. false = hide them.
+// Historic = every row dated BEFORE 2026-08-11 (quarterly 143s + the 28/50 drop).
+// false → charts/hero use Aug 11 onward only (115 hold through Aug 27, then 117 on Aug 31).
+// Flip this one line. Or comment one and uncomment the other.
+const SHOW_HISTORY = true;
+// const SHOW_HISTORY = false;
+const HISTORY_BEFORE = "2026-08-11"; // rows dated before this are historic
+// -----------------------------------------------------------------------------
 
 const WEIGH_INS = [
   { date: "2025-06-22", lb: 143 },
