@@ -565,10 +565,7 @@
   }
 
   function renderHero(sorted) {
-    if (!sorted.length) {
-      setText("lede", "Add a first weigh-in in js/data.js and this place lights up.");
-      return;
-    }
+    if (!sorted.length) return;
     var latest = sorted[sorted.length - 1];
     var prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
     setText("latest-weight", formatLb(latest.lb));
@@ -591,15 +588,6 @@
     if (latest.bf === null) {
       var fatCard = document.querySelector(".hero.fat .hero-sub");
       if (fatCard) fatCard.textContent = "dash when weight is under 115 lb";
-    }
-
-    var all = allTimeChange(sorted);
-    if (all && all.lbs < -0.05) {
-      setText("lede", "Down " + Math.abs(all.lbs).toFixed(1) + " lb from the first weigh-in. Keep the streak kind.");
-    } else if (all && all.lbs > 0.05) {
-      setText("lede", "Up from the first point — still just data. Next weigh-in is a fresh start.");
-    } else {
-      setText("lede", "Steady numbers. Showing up is the habit that matters.");
     }
   }
 
