@@ -33,9 +33,7 @@
     Only fields: { date: "YYYY-MM-DD", lb: 117 }
     Height is fixed at 5'6" (66 in). BMI and body fat % are calculated for you.
 
-    HISTORY TOGGLE is right next to the array in js/data.js:
-      const SHOW_HISTORY = true;   // include rows before 2026-08-11
-      const SHOW_HISTORY = false;  // hide those; keep Aug 11 onward
+    HISTORY: in js/data.js, uncomment `st (off)` next to the array to hide rows before 2026-08-11.
   -->
 
   <main>
@@ -110,10 +108,16 @@
       <article class="bubble chart-card">
         <div class="chart-head">
           <h2>BMI over time</h2>
-          <p>Exactly (weight_lb / 66²) × 703. Height stays 5′6″.</p>
+          <p>WHO adult zones on (lb / 66²) × 703. Height stays 5′6″. Clear line at 25 (overweight starts above).</p>
         </div>
+        <ul class="bmi-key" aria-label="WHO BMI categories">
+          <li><span class="swatch under"></span> underweight &lt; 18.5</li>
+          <li><span class="swatch normal"></span> normal 18.5–24.9</li>
+          <li><span class="swatch over"></span> overweight 25–29.9</li>
+          <li><span class="swatch obese"></span> obese ≥ 30</li>
+        </ul>
         <div class="chart-frame">
-          <canvas id="chart-bmi" aria-label="BMI over time"></canvas>
+          <canvas id="chart-bmi" aria-label="BMI over time with WHO category bands"></canvas>
         </div>
       </article>
 
