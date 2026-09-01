@@ -16,7 +16,7 @@ Height is locked at **5′6″ (66 in)**. There is no height field.
 
 From weight only:
 
-- **Body fat %** = `(weight − 115) / weight` (shown as a percent). Dash when weight is 115 lb or under.
+- **Body fat %** = `(weight − 115) / weight` (shown as a percent). That’s 0% at 115 lb. Dash when weight is under 115 lb.
 - **BMI** = `(weight_lb / 66²) × 703`
 
 The dashboard also plots weight, body fat %, BMI, and a ±10% progress band, plus 7-day / 30-day / all-time change.

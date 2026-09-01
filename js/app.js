@@ -6,7 +6,10 @@
   var BMI_FACTOR = 703;
 
   function bodyFatPercent(lb) {
-    if (!isFiniteNumber(lb) || lb <= 115) return null;
+    if (!isFiniteNumber(lb) || lb <= 0) return null;
+    // Formula is (weight - 115) / weight. At 115 that is exactly 0 — show 0%.
+    // Below 115 it would go negative; show a dash instead of crashing or inventing a %.
+    if (lb < 115) return null;
     return ((lb - 115) / lb) * 100;
   }
 
@@ -396,7 +399,7 @@
 
     if (latest.bf === null) {
       var fatCard = document.querySelector(".hero.fat .hero-sub");
-      if (fatCard) fatCard.textContent = "dash when weight is 115 lb or under";
+      if (fatCard) fatCard.textContent = "dash when weight is under 115 lb";
     }
 
     var all = allTimeChange(sorted);

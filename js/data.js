@@ -10,7 +10,7 @@
 // updates when GitHub Pages deploys. No forms, no backend, no extra fields.
 //
 // Height is fixed at 5'6" (66 in). Body fat % and BMI are calculated in js/app.js:
-//   BF% = (weight - 115) / weight
+//   BF% = (weight - 115) / weight   (0% at 115 lb; dash below 115 so it never goes negative)
 //   BMI = (weight_lb / 66^2) * 703
 //
 // Latest / hero numbers always come from the newest DATE in this array.
@@ -74,21 +74,21 @@ const WEIGH_INS = [
   { date: "2026-08-09", lb: 119 },
   { date: "2026-08-10", lb: 118.5 },
   { date: "2026-08-11", lb: 118 },
-  { date: "2026-08-12", lb: 118 },
-  { date: "2026-08-13", lb: 118 },
-  { date: "2026-08-14", lb: 118 },
-  { date: "2026-08-15", lb: 118 },
-  { date: "2026-08-16", lb: 118 },
-  { date: "2026-08-17", lb: 118 },
-  { date: "2026-08-18", lb: 118 },
-  { date: "2026-08-19", lb: 118 },
-  { date: "2026-08-20", lb: 118 },
-  { date: "2026-08-21", lb: 118 },
-  { date: "2026-08-22", lb: 118 },
-  { date: "2026-08-23", lb: 118 },
-  { date: "2026-08-24", lb: 118 },
-  { date: "2026-08-25", lb: 118 },
-  { date: "2026-08-26", lb: 118 },
-  { date: "2026-08-27", lb: 118 },
+  { date: "2026-08-12", lb: 117.5 },
+  { date: "2026-08-13", lb: 117 },
+  { date: "2026-08-14", lb: 116.5 },
+  { date: "2026-08-15", lb: 116 },
+  { date: "2026-08-16", lb: 115.5 },
+  { date: "2026-08-17", lb: 115 },
+  { date: "2026-08-18", lb: 115 },
+  { date: "2026-08-19", lb: 115 },
+  { date: "2026-08-20", lb: 115 },
+  { date: "2026-08-21", lb: 115 },
+  { date: "2026-08-22", lb: 115 },
+  { date: "2026-08-23", lb: 115 },
+  { date: "2026-08-24", lb: 115 },
+  { date: "2026-08-25", lb: 115 },
+  { date: "2026-08-26", lb: 115 },
+  { date: "2026-08-27", lb: 115 },
   { date: "2026-08-31", lb: 117 },
 ];
