@@ -401,7 +401,7 @@
 
     var all = allTimeChange(sorted);
     if (all && all.lbs < -0.05) {
-      setText("lede", "Down " + Math.abs(all.lbs).toFixed(1) + " lb from the first sample. Keep the streak kind.");
+      setText("lede", "Down " + Math.abs(all.lbs).toFixed(1) + " lb from the first weigh-in. Keep the streak kind.");
     } else if (all && all.lbs > 0.05) {
       setText("lede", "Up from the first point — still just data. Next weigh-in is a fresh start.");
     } else {
