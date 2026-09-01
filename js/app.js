@@ -266,6 +266,55 @@
     Chart.defaults.elements.line.borderWidth = 3;
   }
 
+  var chartRegistry = [];
+  var tooltipDismissBound = false;
+
+  function hideChartTooltip(chart) {
+    if (!chart) return;
+    var hover = chart.getActiveElements ? chart.getActiveElements() : [];
+    var tip = chart.tooltip && chart.tooltip.getActiveElements
+      ? chart.tooltip.getActiveElements()
+      : [];
+    if (!hover.length && !tip.length) return;
+    chart.setActiveElements([]);
+    if (chart.tooltip) {
+      chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+    }
+    // mouseout so Chart.js drops the last tap/hover and does not replay it on update
+    if (chart.canvas) {
+      chart.canvas.dispatchEvent(new Event("mouseout"));
+    }
+    chart.update("none");
+  }
+
+  function hideAllChartTooltips() {
+    chartRegistry.forEach(hideChartTooltip);
+  }
+
+  function eventHitsCanvas(event, canvas) {
+    var node = event.target;
+    if (!canvas || !node) return false;
+    if (node === canvas) return true;
+    return typeof canvas.contains === "function" && canvas.contains(node);
+  }
+
+  function bindTooltipDismiss() {
+    if (tooltipDismissBound) return;
+    tooltipDismissBound = true;
+
+    function clearIfOutside(event) {
+      chartRegistry.forEach(function (chart) {
+        if (!eventHitsCanvas(event, chart.canvas)) {
+          hideChartTooltip(chart);
+        }
+      });
+    }
+
+    document.addEventListener("pointerdown", clearIfOutside, true);
+    document.addEventListener("touchstart", clearIfOutside, true);
+    window.addEventListener("scroll", hideAllChartTooltips, { passive: true, capture: true });
+  }
+
   function makeLineChart(canvasId, datasets, extra) {
     var canvas = document.getElementById(canvasId);
     if (!canvas || !window.Chart) return null;
@@ -276,7 +325,7 @@
     };
     if (extra.yMin !== undefined) yScale.min = extra.yMin;
     if (extra.yMax !== undefined) yScale.max = extra.yMax;
-    return new Chart(canvas, {
+    var chart = new Chart(canvas, {
       type: "line",
       data: { datasets: datasets },
       plugins: extra.plugins || [],
@@ -285,6 +334,17 @@
         maintainAspectRatio: false,
         parsing: false,
         interaction: { mode: "index", intersect: false },
+        onClick: function (event, _elements, instance) {
+          var hits = instance.getElementsAtEventForMode(
+            event,
+            "nearest",
+            { intersect: true },
+            true
+          );
+          if (!hits.length) {
+            hideChartTooltip(instance);
+          }
+        },
         plugins: {
           legend: { display: extra.legend !== false },
           tooltip: {
@@ -311,6 +371,9 @@
         },
       },
     });
+    chartRegistry.push(chart);
+    bindTooltipDismiss();
+    return chart;
   }
 
   var BMI_BANDS = [
