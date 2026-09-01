@@ -247,8 +247,8 @@
           y: {
             grid: { color: "rgba(42, 33, 72, 0.06)" },
             ticks: extra.yTicks || {},
-            suggestedMin: extra.suggestedMin,
-            suggestedMax: extra.suggestedMax,
+            ...(extra.suggestedMin !== undefined ? { suggestedMin: extra.suggestedMin } : {}),
+            ...(extra.suggestedMax !== undefined ? { suggestedMax: extra.suggestedMax } : {}),
           },
         },
       },

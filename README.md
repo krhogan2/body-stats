@@ -7,7 +7,7 @@ Kevin Hogan’s personal weight dashboard. Bubbly cards, big numbers, date + pou
 ## Add a weigh-in
 
 1. Open `js/data.js` and find the block marked `ADD A NEW WEIGH-IN HERE`.
-2. Add a line like `{ date: "2026-09-01", lb: 184.6 },` (YYYY-MM-DD, pounds). Newest can go at the top or bottom.
+2. Add a line like `{ date: "2026-09-02", lb: 117 },` (YYYY-MM-DD, pounds). Newest can go at the top or bottom. The latest date wins for the hero numbers.
 3. Commit and push to `main`. The live site updates after Pages deploys.
 
 Height is locked at **5′6″ (66 in)**. There is no height field.
