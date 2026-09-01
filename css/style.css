@@ -179,7 +179,7 @@ code {
 .log-card { padding: 1.15rem 1.1rem 1.2rem; }
 
 .chart-head h2 {
-  margin: 0;
+  margin: 0 0 0.8rem;
   font-family: Fredoka, Nunito, sans-serif;
   font-size: clamp(1.25rem, 4.5vw, 1.6rem);
 }
