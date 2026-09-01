@@ -19,7 +19,7 @@ From weight only:
 - **Body fat %** = `(weight − 115) / weight` (shown as a percent). That’s 0% at 115 lb. Dash when weight is under 115 lb.
 - **BMI** = `(weight_lb / 66²) × 703`
 
-The dashboard also plots weight, body fat %, BMI, and a ±10% progress band, plus 7-day / 30-day / all-time change.
+The dashboard also plots weight, body fat %, BMI, and a ±10% progress band, plus 7-day / 30-day / all-time change. Charts sort by date and auto-scale from every row in `js/data.js` — no hardcoded year or 30-day window.
 
 ## Open locally
 

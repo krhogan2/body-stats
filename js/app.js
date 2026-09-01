@@ -58,7 +58,11 @@
   }
 
   function formatLb(n) {
-    return n.toFixed(1);
+    var rounded = Math.round(n * 100) / 100;
+    var text = rounded.toFixed(2);
+    if (text.endsWith("00")) return rounded.toFixed(1);
+    if (text.endsWith("0")) return rounded.toFixed(1);
+    return text;
   }
 
   function formatPct(n) {
@@ -95,6 +99,8 @@
     });
   }
 
+  // Look backward from the latest weigh-in DATE in the array (not today).
+  // days is a span between actual rows, not a hardcoded chart window.
   function changeOverDays(sorted, days) {
     if (sorted.length < 2) return null;
     var latest = sorted[sorted.length - 1];
@@ -107,6 +113,7 @@
     return {
       lbs: latest.lb - baseline.lb,
       pct: ((latest.lb - baseline.lb) / baseline.lb) * 100,
+      fromIso: baseline.iso,
     };
   }
 
@@ -132,6 +139,22 @@
     return { avg: sum / pts.length, count: pts.length };
   }
 
+  function dateTick(ms) {
+    var dt = new Date(ms);
+    var iso = [
+      dt.getUTCFullYear(),
+      String(dt.getUTCMonth() + 1).padStart(2, "0"),
+      String(dt.getUTCDate()).padStart(2, "0"),
+    ].join("-");
+    return prettyDate(iso);
+  }
+
+  function xy(sorted, pick) {
+    return sorted.map(function (row) {
+      return { x: row.date.getTime(), y: pick(row) };
+    });
+  }
+
   function setText(id, text) {
     var el = document.getElementById(id);
     if (el) el.textContent = text;
@@ -155,7 +178,7 @@
       return;
     }
     setText(idValue, formatSignedPct(change.pct));
-    setText(idSub, formatSignedLb(change.lbs));
+    setText(idSub, formatSignedLb(change.lbs) + (change.fromIso ? " since " + prettyDate(change.fromIso) : ""));
     setTrend(idValue, change.pct);
   }
 
@@ -168,12 +191,15 @@
     var min = Math.min.apply(null, weights);
     var max = Math.max.apply(null, weights);
     var span = max - min || 1;
+    var t0 = sorted[0].date.getTime();
+    var t1 = sorted[sorted.length - 1].date.getTime();
+    var tSpan = t1 - t0 || 1;
     var w = 160;
     var h = 40;
     var pad = 3;
-    var points = weights.map(function (lb, i) {
-      var x = pad + (i / (weights.length - 1)) * (w - pad * 2);
-      var y = pad + (1 - (lb - min) / span) * (h - pad * 2);
+    var points = sorted.map(function (row) {
+      var x = pad + ((row.date.getTime() - t0) / tSpan) * (w - pad * 2);
+      var y = pad + (1 - (row.lb - min) / span) * (h - pad * 2);
       return x.toFixed(1) + "," + y.toFixed(1);
     });
     var polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
@@ -221,37 +247,43 @@
     Chart.defaults.elements.line.borderWidth = 3;
   }
 
-  function labels(sorted) {
-    return sorted.map(function (row) { return prettyDate(row.iso); });
-  }
-
   function makeLineChart(canvasId, datasets, extra) {
     var canvas = document.getElementById(canvasId);
     if (!canvas || !window.Chart) return null;
     extra = extra || {};
     return new Chart(canvas, {
       type: "line",
-      data: { labels: extra.labels || [], datasets: datasets },
+      data: { datasets: datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        parsing: false,
         interaction: { mode: "index", intersect: false },
         plugins: {
           legend: { display: extra.legend !== false },
           tooltip: {
-            callbacks: extra.tooltipCallbacks || {},
+            callbacks: {
+              title: function (items) {
+                if (!items.length) return "";
+                return dateTick(items[0].parsed.x);
+              },
+            },
           },
         },
         scales: {
           x: {
+            type: "linear",
             grid: { display: false },
-            ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
+            ticks: {
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 6,
+              callback: function (value) { return dateTick(value); },
+            },
           },
           y: {
             grid: { color: "rgba(42, 33, 72, 0.06)" },
             ticks: extra.yTicks || {},
-            ...(extra.suggestedMin !== undefined ? { suggestedMin: extra.suggestedMin } : {}),
-            ...(extra.suggestedMax !== undefined ? { suggestedMax: extra.suggestedMax } : {}),
           },
         },
       },
@@ -261,22 +293,22 @@
   function renderCharts(sorted) {
     if (!window.Chart || !sorted.length) return;
     chartDefaults();
-    var lbs = labels(sorted);
     var start = sorted[0].lb;
-    var upper = sorted.map(function () { return start * 1.1; });
-    var lower = sorted.map(function () { return start * 0.9; });
+    var dense = sorted.length > 20;
+    var pointRadius = dense ? 2 : 4;
 
     makeLineChart("chart-weight", [
       {
         label: "Weight",
-        data: sorted.map(function (row) { return row.lb; }),
+        data: xy(sorted, function (row) { return row.lb; }),
         borderColor: "#ff7a5c",
         backgroundColor: "#ff7a5c",
         fill: false,
+        pointRadius: pointRadius,
       },
       {
         label: "+10% from start",
-        data: upper,
+        data: xy(sorted, function () { return start * 1.1; }),
         borderColor: "rgba(110, 182, 255, 0.0)",
         backgroundColor: "rgba(110, 182, 255, 0.18)",
         pointRadius: 0,
@@ -286,7 +318,7 @@
       },
       {
         label: "−10% from start",
-        data: lower,
+        data: xy(sorted, function () { return start * 0.9; }),
         borderColor: "rgba(110, 182, 255, 0.0)",
         backgroundColor: "rgba(110, 182, 255, 0.0)",
         pointRadius: 0,
@@ -294,19 +326,19 @@
         fill: false,
         borderWidth: 0,
       },
-    ], { labels: lbs });
+    ]);
 
     makeLineChart("chart-bf", [
       {
         label: "Body fat %",
-        data: sorted.map(function (row) { return row.bf; }),
+        data: xy(sorted, function (row) { return row.bf; }),
         borderColor: "#9b8cff",
         backgroundColor: "rgba(155, 140, 255, 0.16)",
         fill: true,
         spanGaps: true,
+        pointRadius: pointRadius,
       },
     ], {
-      labels: lbs,
       legend: false,
       yTicks: { callback: function (v) { return v + "%"; } },
     });
@@ -314,27 +346,26 @@
     makeLineChart("chart-bmi", [
       {
         label: "BMI",
-        data: sorted.map(function (row) { return row.bmi; }),
+        data: xy(sorted, function (row) { return row.bmi; }),
         borderColor: "#3ecf9f",
         backgroundColor: "rgba(62, 207, 159, 0.16)",
         fill: true,
+        pointRadius: pointRadius,
       },
-    ], { labels: lbs, legend: false });
+    ], { legend: false });
 
-    var changePts = sorted.map(function (row) {
-      return ((row.lb - start) / start) * 100;
-    });
     makeLineChart("chart-change", [
       {
         label: "% from start",
-        data: changePts,
+        data: xy(sorted, function (row) { return ((row.lb - start) / start) * 100; }),
         borderColor: "#6eb6ff",
         backgroundColor: "#6eb6ff",
         fill: false,
+        pointRadius: pointRadius,
       },
       {
         label: "+10%",
-        data: sorted.map(function () { return 10; }),
+        data: xy(sorted, function () { return 10; }),
         borderColor: "#ff9b86",
         borderDash: [6, 6],
         pointRadius: 0,
@@ -342,16 +373,13 @@
       },
       {
         label: "−10%",
-        data: sorted.map(function () { return -10; }),
+        data: xy(sorted, function () { return -10; }),
         borderColor: "#3ecf9f",
         borderDash: [6, 6],
         pointRadius: 0,
         borderWidth: 2,
       },
     ], {
-      labels: lbs,
-      suggestedMin: -12,
-      suggestedMax: 12,
       yTicks: { callback: function (v) { return v + "%"; } },
     });
   }
